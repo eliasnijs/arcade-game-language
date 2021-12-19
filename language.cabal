@@ -8,7 +8,12 @@ library
   default-language: Haskell2010
   build-depends: base >= 4.14.3.0 && < 4.15
                , gloss >= 1.13.2.1 && < 1.14
-  exposed-modules: VoorbeeldModule
+  exposed-modules: Parser
+                 , EvaluatorImplementation
+                 , ParserImplementation
+                 , Evaluator
+                 , Types
+                 , Keywords
 
 executable language
   main-is: Main.hs
