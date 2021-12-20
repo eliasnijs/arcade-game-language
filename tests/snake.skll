@@ -1,0 +1,55 @@
+height = 20;
+width  = 10;
+
+mv_x = 0;
+mv_y = 1;
+pv_x = 0;
+pv_y = 0;
+
+fn = 1;
+fx = 0; 
+fy = 0; 
+
+l_enemy = [[0,0]];
+ls_enemy = 0;
+
+proc check_input () {
+  if (BUTTON_LEFT) {
+    mv_x = -1; mv_y = 0;
+  }
+  if (BUTTON_RIGHT) {
+    mv_x = 1; mv_y = 0;
+  }
+  if (BUTTON_BOTTOM) {
+    mv_x = 0; mv_y = -1;
+  }
+  if (BUTTON_TOP) {
+    mv_x = 0; mv_y = 1;
+  }
+}
+
+proc update_scene () {
+  if (fn) {
+    fx = random(-width/2,(width+1)/2);
+    fy = random(-height/2,(height+1/2));
+  }
+  if (((fx == pv_x) && (fy == pv_y))) {
+    l_enemy.add(l_enemy.get(ls_enemy))
+  }
+  index = ls_enemy;
+  while ((index > 1)) {
+    l_enemy.set(index, l_enemy.get(index-1))
+    index = index - 1;
+  }
+  l_enemy.set(0, [pv_x, pv_y])
+  pv_x = pv_x + mv_x;
+  pv_y = pv_y + mv_y;
+}
+
+proc main () {
+  while (running) {
+    check_input(); 
+    update_scene();
+    render(width, height, [[pv_x, pv_y], [fx, fy]], l_enemy) 
+  }
+}

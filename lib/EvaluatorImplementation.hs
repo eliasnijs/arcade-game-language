@@ -1,65 +1,100 @@
 module EvaluatorImplementation where
 
+import Data.Maybe
+import Data.Map as Map
 import Control.Monad
-import Types
 import Evaluator
+import Types
+import qualified Control.Arrow as Map
 
--- Primitive types: 
---   [ ] Null
---   [ ] Bool 
---   [ ] Integer
---   [ ] Float
---   [ ] Char
---   [ ] String
---   [ ] Lists
+----- EXPR ------------------------------------------
+evalExpr :: SekellExpr -> State -> IO (Int, State)
 
--- Control flow:
---   [ ] create var
---   [ ] assign var
---   [ ] call var 
---   [ ] if
---   [ ] while
---   [ ] functions
---   [ ] call function
---   [ ] function return
+evalExpr (TpInt i) s = 
+  do return (i, s)
 
--- Feedback:
---   [ ] print
+evalExpr (OpPLUS (e1, e2)) s = evalBinOpExpr e1 e2 s (+)
 
--- Expr
-evalString :: SekellExpr -> State -> String
-evalString (TpString str) s = str
-evalString _  s = undefined 
+evalExpr (OpMIN (e1, e2)) s = evalBinOpExpr e1 e2 s (-)
 
-evalExpr :: SekellExpr -> State -> Int 
+evalExpr (OpMULT (e1, e2)) s = evalBinOpExpr e1 e1 s (*)
 
-evalExpr _  s = undefined 
+evalExpr (OpDIV (e1, e2)) s = evalBinOpExpr e1 e1 s div
 
--- Stmt
-evalStmt :: SekellStmt -> State -> (IO(), State)
+evalExpr (CmpGT (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x > y))
 
-evalStmt (StmtScope l) s = (do{return ()}, ns)
-    where checkIfEnter :: SekellStateEle -> Bool 
-          checkIfEnter SEEnterScope = True
-          checkIfEnter _ = False
-          runScopeEval :: [SekellStmt] -> State -> State
-          runScopeEval [e] stck = tail $ takeWhile checkIfEnter $ snd $ evalStmt e stck
-          runScopeEval (l:ls) stck = runScopeEval ls nstck
-            where nstck = tail $ takeWhile checkIfEnter $ snd $ evalStmt l stck
-          runScopeEval _ _ = undefined
-          ns = runScopeEval l (s ++ [SEEnterScope])
+evalExpr (CmpLT (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x < y))
 
-evalStmt (StmtIf (r, stmt)) s = (do {when (evalExpr r s > 0) $ do fst $ evalStmt stmt s}, s)
+evalExpr (CmpGE (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x >= y))
 
-evalStmt (StmtPrint x) s = (do {putStrLn (evalString x s)}, s)
+evalExpr (CmpLE (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x <= y))
 
-evalStmt (StmtCreateVar (i, v)) s = (do {return ()}, s ++ [SEVar (i, evalExpr v s)])
+evalExpr (CmpEQ (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x == y))
 
-evalStmt (StmtAssignVar (i, v)) s = (do {return ()}, s ++ [SEVar (i, evalExpr v s)])
+evalExpr (CmpAnd (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (fromEnum x == 1 && fromEnum y == 1 ))
+
+evalExpr (CmpOr (e1, e2)) s =  evalBinOpExpr e1 e1 s (\x y -> fromEnum (fromEnum x == 1 || fromEnum y == 1 ))
+
+evalExpr (CallVar k) (e,p) = do 
+  let i' = fromMaybe undefined (Map.lookup k e)
+  return (i',(e,p)) 
+
+evalExpr (CallProc (k, a)) (e,p) = do
+  st' <- evalStmt (fromMaybe undefined (Map.lookup k p)) (e,p)
+  return (0, st') 
+                       
+evalExpr _ _ = undefined
+
+evalBinOpExpr :: SekellExpr -> SekellExpr -> State -> (Int -> Int -> Int) -> IO (Int, State)
+evalBinOpExpr e1 e2 s f = 
+  do (n1,st') <- evalExpr e1 s
+     (n2,st'') <- evalExpr e2 st'
+     return (f n1 n2, st'')
+
+----- STMT ------------------------------------------
+evalStmt :: SekellStmt -> State -> IO State
+
+evalStmt (StmtScope x) s = do runEval x s
+  where runEval :: [SekellStmt] -> State -> IO State
+        runEval [] st = do return st
+        runEval [x] st = do evalStmt x st
+        runEval (x:xs) st = do
+          st' <- evalStmt x st
+          runEval xs st' 
+
+evalStmt (StmtPrint x) s = do 
+  (str,st') <- evalToString x s
+  putStrLn str
+  return st'
+    where evalToString (TpString str) s = do return (str, s)
+          evalToString a s = do (i,st') <- evalExpr a s
+                                return (show i, st')
+
+
+evalStmt (StmtIf (r, stmt)) s = do 
+  (t, st') <- evalExpr r s
+  case t of 
+    0 -> do {return st'}
+    _ -> do {evalStmt stmt st'}
+
+evalStmt (StmtWhile (r, stmt)) s = do 
+  (t, st') <- evalExpr r s
+  case t of 
+    0 -> do {return s}
+    _ -> do st'' <- evalStmt stmt st'
+            evalStmt (StmtWhile (r, stmt)) st''
+
+evalStmt (StmtProc (k, args, stmt)) (e,p) = do 
+  return (e, insert k stmt p)
+
+evalStmt (StmtAssignVar (k, v)) (e,p) = do 
+  (i,(e',p')) <- evalExpr v (e,p)
+  return (insert k i e', p')
+
+evalStmt (StmtDoExpr e) s = do
+  snd <$> evalExpr e s
 
 evalStmt _ _ = undefined
-
-
 
 
 

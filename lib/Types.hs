@@ -1,47 +1,41 @@
 module Types where
 
+import Data.Map
+
 type Identifier = String
 
 -- TODO
 data SekellExpr
-  = TpNull
-  | TpBool Bool
-  | TpInteger Int
-  | TpFloat Float
-  | TpChar Char
+  = TpInt Int
   | TpString String
-  | CmpGT (SekellStmt, SekellStmt)
-  | CmpGE (SekellStmt, SekellStmt)   
-  | CmpEQ (SekellStmt, SekellStmt)  
-  | CmpLT (SekellStmt, SekellStmt) 
-  | CmpLE (SekellStmt, SekellStmt) 
-  | CmpAnd [SekellExpr]
-  | CmpOr [SekellExpr]
+  | CallVar Identifier
+  | CallProc (Identifier, [SekellExpr])
+  | OpPLUS (SekellExpr, SekellExpr)
+  | OpMIN (SekellExpr, SekellExpr)
+  | OpMULT (SekellExpr, SekellExpr)
+  | OpDIV (SekellExpr, SekellExpr)
+  | CmpGT (SekellExpr, SekellExpr)
+  | CmpGE (SekellExpr, SekellExpr)
+  | CmpEQ (SekellExpr, SekellExpr)
+  | CmpLT (SekellExpr, SekellExpr)
+  | CmpLE (SekellExpr, SekellExpr)
+  | CmpAnd (SekellExpr, SekellExpr)
+  | CmpOr (SekellExpr, SekellExpr)
   | StmtCallVar Identifier
   deriving (Show, Eq)
 
-data SekellStmt 
-  = StmtPrint SekellExpr 
+data SekellStmt
+  = StmtPrint SekellExpr
   | StmtAssignVar (Identifier, SekellExpr)
-  | StmtCreateVar (Identifier, SekellExpr)
   | StmtReturn SekellExpr
   | StmtIf (SekellExpr, SekellStmt)
   | StmtWhile (SekellExpr, SekellStmt)
-  | StmtFunction SekellStmt 
+  | StmtProc (Identifier, [SekellStmt], SekellStmt)
+  | StmtDoExpr SekellExpr
   | StmtScope [SekellStmt]
   deriving (Show, Eq)
 
-
-
-data SekellStateEle 
-  = SEVar (Identifier, Int)
-  | SEEnterScope  
-
-type State = [SekellStateEle]
-
-
-
-
+type State = (Map Identifier Int, Map Identifier SekellStmt) 
 
 
 

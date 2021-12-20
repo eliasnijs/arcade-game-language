@@ -2,23 +2,18 @@ module Keywords where
 
 type Keyword = String
 
-nullKey, varKey, ifKey, procKey, loopKey, returnKey, trueKey, falseKey, andSep, orSep, charDelim, strDelim, stmtDelim, gtSep, geSep, eqSep, leSep, ltSep :: Keyword
-nullKey      = "NULL"
-trueKey      = "F"
-falseKey     = "T"
-
-varKey       = "var"
-procKey      = "proc"
+ifKey, procKey, loopKey, returnKey, andSep, orSep, strDelim, stmtDelim, gtSep, geSep, eqSep, leSep, ltSep :: Keyword
+procKey      = "proc "
 ifKey        = "if"
 loopKey      = "while"
 printKey     = "print"
 
 strDelim     = "\""
-charDelim    = "\'"
 
 asgnDelim    = "="
-returnKey    = "return"
+returnKey    = "fá"
 
+argDelim     = ","
 stmtDelim    = ";"
 scpInDelim   = "{"
 scpOutDelim  = "}"
@@ -32,4 +27,7 @@ ltSep        = "<"
 geSep        = ">="
 leSep        = "<="
 eqSep        = "=="
-
+plusSep      = "+"
+minSep       = "-"
+multSep      = "*"
+divSep       = "/"

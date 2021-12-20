@@ -1,43 +1,35 @@
-
 -- Sekell language parser (c) Elias Nijs 2021
-
-import Parser
-import ParserImplementation
+import Data.Maybe
 import Evaluator
 import EvaluatorImplementation
-import Types
-import Data.Maybe
+import Keywords
+import Parser
+import ParserImplementation
 import System.Environment (getArgs)
+import Types
+import Data.Map as Map
 
 main :: IO ()
 main = do
-  stmt <- parseFile "tests/simple_test1.skll" sekellScope
-  print stmt
-  putStrLn ""
-  case stmt of
-    Nothing -> do {putStrLn "failed to parse! quitting program..."} 
-    Just v  -> fst $ evalStmt v []
-  -- evaluateStmt stmt 
+  args <- do return ["tests/snake.skll"] -- TODO: Change to getArgs when everything is done
+  case args of
+    [] -> putStrLn "no input files!"
+    _ -> do
+      stmt <- parseFile (head args) sekellScope
+      print stmt
+      state <- interpret stmt
+      return ()
 
 parseFile :: FilePath -> Parser a -> IO (Maybe a)
 parseFile path parser = do
   str <- readFile path
-  return (snd <$> parse parser str) 
+  return (snd <$> parse parser str)
 
--- evaluateStmt :: Maybe [SekellStmt] -> Evaluator a -> Maybe (a, Stack)
--- evaluateStmt stmt evaluator =
---   case stmt of
---     Nothing -> Nothing
---     Just t -> do
---       evalStmt evaluator t
-
-
-
-
-
-
-
-
-
-
-
+interpret :: Maybe SekellStmt -> IO (Maybe State)
+interpret s =
+  case s of
+    Nothing -> do
+      putStrLn "failed to parse!"
+      return Nothing 
+    Just v -> do
+      Just <$> evalStmt v (Map.empty, Map.empty)
