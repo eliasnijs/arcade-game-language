@@ -3,15 +3,25 @@ module EvaluatorImplementation where
 import Data.Maybe
 import Data.Map as Map
 import Control.Monad
-import Evaluator
 import Types
 import qualified Control.Arrow as Map
 
 ----- EXPR ------------------------------------------
-evalExpr :: SekellExpr -> State -> IO (Int, State)
+evalExpr :: SekellExpr -> State -> IO (StateValue, State)
 
 evalExpr (TpInt i) s = 
-  do return (i, s)
+  do return (StateVar i, s)
+
+evalExpr (TpList i) s = do runEval i s
+  where runEval :: [SekellExpr] -> State -> IO (StateValue, State)
+        runEval [] st = do return (StateList [], st)
+        runEval (x:xs) st = do
+          (i', st') <- runEval xs st
+          (v, st'') <- evalExpr x st'
+          case (v, i') of 
+            (StateList v', StateList i') -> return (StateList (StateList v': i'), st'')
+            (StateVar v',  StateList i') -> return (StateList (v: i'), st'')
+            (_, _)  -> return (StateNULL, st'')
 
 evalExpr (OpPLUS (e1, e2)) s = evalBinOpExpr e1 e2 s (+)
 
@@ -41,15 +51,17 @@ evalExpr (CallVar k) (e,p) = do
 
 evalExpr (CallProc (k, a)) (e,p) = do
   st' <- evalStmt (fromMaybe undefined (Map.lookup k p)) (e,p)
-  return (0, st') 
+  return (StateVar 0, st') 
                        
 evalExpr _ _ = undefined
 
-evalBinOpExpr :: SekellExpr -> SekellExpr -> State -> (Int -> Int -> Int) -> IO (Int, State)
+evalBinOpExpr :: SekellExpr -> SekellExpr -> State -> (Int -> Int -> Int) -> IO (StateValue, State)
 evalBinOpExpr e1 e2 s f = 
   do (n1,st') <- evalExpr e1 s
      (n2,st'') <- evalExpr e2 st'
-     return (f n1 n2, st'')
+     case (n1, n2) of
+       (StateVar n1', StateVar n2') -> return (StateVar (f n1' n2'), st'')
+       (_, _) -> return (StateNULL, st'')
 
 ----- STMT ------------------------------------------
 evalStmt :: SekellStmt -> State -> IO State
@@ -57,7 +69,6 @@ evalStmt :: SekellStmt -> State -> IO State
 evalStmt (StmtScope x) s = do runEval x s
   where runEval :: [SekellStmt] -> State -> IO State
         runEval [] st = do return st
-        runEval [x] st = do evalStmt x st
         runEval (x:xs) st = do
           st' <- evalStmt x st
           runEval xs st' 
@@ -70,17 +81,16 @@ evalStmt (StmtPrint x) s = do
           evalToString a s = do (i,st') <- evalExpr a s
                                 return (show i, st')
 
-
 evalStmt (StmtIf (r, stmt)) s = do 
   (t, st') <- evalExpr r s
   case t of 
-    0 -> do {return st'}
+    StateVar 0 -> do {return st'}
     _ -> do {evalStmt stmt st'}
 
 evalStmt (StmtWhile (r, stmt)) s = do 
   (t, st') <- evalExpr r s
   case t of 
-    0 -> do {return s}
+    StateVar 0 -> do {return s}
     _ -> do st'' <- evalStmt stmt st'
             evalStmt (StmtWhile (r, stmt)) st''
 
@@ -95,9 +105,3 @@ evalStmt (StmtDoExpr e) s = do
   snd <$> evalExpr e s
 
 evalStmt _ _ = undefined
-
-
-
-
-
-

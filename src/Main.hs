@@ -1,23 +1,24 @@
 -- Sekell language parser (c) Elias Nijs 2021
 import Data.Maybe
-import Evaluator
 import EvaluatorImplementation
 import Keywords
 import Parser
 import ParserImplementation
-import System.Environment (getArgs)
 import Types
+import System.Environment (getArgs)
 import Data.Map as Map
+import Backend (initialise)
 
 main :: IO ()
 main = do
-  args <- do return ["tests/snake.skll"] -- TODO: Change to getArgs when everything is done
+  args <- do return ["games/test.skll"] -- TODO: Change to getArgs when everything is done
   case args of
     [] -> putStrLn "no input files!"
     _ -> do
       stmt <- parseFile (head args) sekellScope
       print stmt
       state <- interpret stmt
+      initialise state
       return ()
 
 parseFile :: FilePath -> Parser a -> IO (Maybe a)

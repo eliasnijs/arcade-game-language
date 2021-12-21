@@ -18,11 +18,14 @@ sekellInt = sekellNeg <|> sekellNat
 
 sekellString = TpString <$> (pString strDelim *> pSpan (/= head strDelim) <* pString strDelim)
 
-sekellCallVar = CallVar <$> (blank *> notNull (pSpan (\x -> isAlpha x || isDigit x || x == '_')) <* blank)
+sekellList = TpList <$> (blank *> pString listInDelim  *> blank *> seperateBy sep sekellExpr <* blank <* pString listOutDelim <* blank)
+  where sep = blank *> pString listSep <* blank
+
+sekellCallVar = CallVar <$> (blank *> notNull (pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&')) <* blank)
 
 sekellCallProc = CallProc <$> ((,) <$> id <*> args)
-  where id   = blank *> pSpan (\x -> isAlpha x || isDigit x || x == '_') <* blank
-        args = blank *>  pString stmtInDelim *> blank *> seperateBy (blank *> pString argDelim <* blank) sekellExpr <* blank <* pString stmtOutDelim <* blank
+  where id   = blank *> pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&') <* blank
+        args = blank *>  pString stmtInDelim *> blank *> seperateBy (blank *> pString argSep <* blank) sekellExpr <* blank <* pString stmtOutDelim <* blank
 
 sekellPLUS = OpPLUS <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$> sekellExpr <*> (blank *> pString plusSep  <* blank) <*> sekellExpr) <* pString stmtOutDelim)
 
@@ -46,11 +49,11 @@ sekellAnd = CmpAnd <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <
 
 sekellOr = CmpOr <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$> sekellExpr <*> (blank *> pString orSep <* blank) <*> sekellExpr) <* pString stmtOutDelim)
 
-sekellExpr = sekellAnd <|> sekellOr <|> sekellGT <|> sekellGE <|> sekellEQ <|> sekellLT <|> sekellLE <|> sekellPLUS <|> sekellMIN <|> sekellMULT <|> sekellDIV <|> sekellString  <|> sekellInt  <|> sekellCallProc <|> sekellCallVar
+sekellExpr = sekellAnd <|> sekellOr <|> sekellGT <|> sekellGE <|> sekellEQ <|> sekellLT <|> sekellLE <|> sekellPLUS <|> sekellMIN <|> sekellMULT <|> sekellDIV <|> sekellString  <|> sekellInt  <|> sekellCallProc <|> sekellCallVar <|> sekellList
 
 ----- STMT ------------------------------------------
 sekellAssignVar, sekellIf, sekellWhile, sekellReturn, sekellProc, sekellStmt, sekellPrint, stmtDoExpr :: Parser SekellStmt  
-sekellAssignVar = StmtAssignVar <$> ((\k _ v -> (k, v)) <$> pSpan (\x -> isAlpha x || isDigit x || x == '_') <*> (blank *> pString asgnDelim <* blank) <*> sekellExpr)
+sekellAssignVar = StmtAssignVar <$> ((\k _ v -> (k, v)) <$> pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&') <*> (blank *> pString asgnDelim <* blank) <*> sekellExpr)
 
 sekellIf = StmtIf <$> (pString ifKey *> blank *> ((,) <$> compare <*> scope))
   where compare = blank *>  pString stmtInDelim *> blank *> sekellExpr <* blank <* pString stmtOutDelim
@@ -61,11 +64,11 @@ sekellWhile = StmtWhile <$> (pString loopKey *> blank *> ((,) <$> compare <*> sc
         scope = blank *> pString scpInDelim *> blank *> sekellScope <* blank <* pString scpOutDelim
 
 sekellProc = StmtProc <$> (pString procKey *> ((,,) <$> id <*> args <*> scope))
-  where id = blank *> pSpan (\x -> isAlpha x || isDigit x || x == '_') <* blank
-        args = blank *>  pString stmtInDelim *> blank *> seperateBy (blank *> pString argDelim <* blank) sekellStmt <* blank <* pString stmtOutDelim <* blank
+  where id = blank *> pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&') <* blank
+        args = blank *>  pString stmtInDelim *> blank *> seperateBy (blank *> pString argSep <* blank) sekellStmt <* blank <* pString stmtOutDelim <* blank
         scope = blank *> pString scpInDelim *> blank *> sekellScope <* blank <* pString scpOutDelim
 
-sekellScope = StmtScope <$> endWidth (blank *> pString stmtDelim <* blank) sekellStmt
+sekellScope = StmtScope <$> endWidth (blank *> pString stmtSep <* blank) sekellStmt
 
 sekellPrint = StmtPrint <$> (pString printKey *> blank *> pString stmtInDelim *> sekellExpr <* blank <* pString stmtOutDelim)
 

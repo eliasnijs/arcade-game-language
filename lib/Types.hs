@@ -4,10 +4,10 @@ import Data.Map
 
 type Identifier = String
 
--- TODO
 data SekellExpr
   = TpInt Int
   | TpString String
+  | TpList [SekellExpr]
   | CallVar Identifier
   | CallProc (Identifier, [SekellExpr])
   | OpPLUS (SekellExpr, SekellExpr)
@@ -35,7 +35,17 @@ data SekellStmt
   | StmtScope [SekellStmt]
   deriving (Show, Eq)
 
-type State = (Map Identifier Int, Map Identifier SekellStmt) 
+
+data StateValue 
+  = StateList [StateValue]
+  | StateVar Int
+  | StateNULL
+  deriving (Show, Eq)
+
+type State = (Map Identifier StateValue, Map Identifier SekellStmt) 
+
+
+
 
 
 

@@ -9,12 +9,16 @@ library
   build-depends: base >= 4.14.3.0 && < 4.15
                , gloss >= 1.13.2.1 && < 1.14
                , containers >= 0.6.5.1 
+               , random >= 1.1
   exposed-modules: Parser
                  , EvaluatorImplementation
                  , ParserImplementation
-                 , Evaluator
                  , Types
                  , Keywords
+                 , Backend 
+                 , Renderer 
+                 , Engine 
+                 , Config
 
 executable language
   main-is: Main.hs
@@ -24,3 +28,4 @@ executable language
                , gloss >= 1.13.2.1 && < 1.14
                , containers >= 0.6.5.1
                , language
+               , random >= 1.1
