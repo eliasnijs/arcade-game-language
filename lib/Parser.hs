@@ -55,9 +55,6 @@ endWidth, seperateBy :: Parser a -> Parser b -> Parser [b]
 endWidth s e = many (e <* s) <|> pure []
 seperateBy s e = (:) <$> e <*> many (s *> e) <|> pure []
 
-makeArray :: a -> [a]
-makeArray e = [e]
-
 blank, sBlank, nBlank, notBlank :: Parser String
 blank = pSpan (\x -> x == ' ' || x == '\n');
 sBlank = pSpan (== ' ')

@@ -15,7 +15,7 @@ main = do
   case args of
     [] -> putStrLn "no input files!"
     _ -> do
-      stmt <- parseFile (head args) sekellScope
+      stmt <- parseFile (head args) sekellFileScope
       print stmt
       state <- interpret stmt
       initialise state

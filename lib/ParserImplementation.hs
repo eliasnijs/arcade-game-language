@@ -52,7 +52,7 @@ sekellOr = CmpOr <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$>
 sekellExpr = sekellAnd <|> sekellOr <|> sekellGT <|> sekellGE <|> sekellEQ <|> sekellLT <|> sekellLE <|> sekellPLUS <|> sekellMIN <|> sekellMULT <|> sekellDIV <|> sekellString  <|> sekellInt  <|> sekellCallProc <|> sekellCallVar <|> sekellList
 
 ----- STMT ------------------------------------------
-sekellAssignVar, sekellIf, sekellWhile, sekellReturn, sekellProc, sekellStmt, sekellPrint, stmtDoExpr :: Parser SekellStmt  
+sekellAssignVar, sekellIf, sekellWhile, sekellReturn, sekellProc, sekellReturnV, sekellStmt, sekellPrint, stmtDoExpr :: Parser SekellStmt  
 sekellAssignVar = StmtAssignVar <$> ((\k _ v -> (k, v)) <$> pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&') <*> (blank *> pString asgnDelim <* blank) <*> sekellExpr)
 
 sekellIf = StmtIf <$> (pString ifKey *> blank *> ((,) <$> compare <*> scope))
@@ -63,17 +63,22 @@ sekellWhile = StmtWhile <$> (pString loopKey *> blank *> ((,) <$> compare <*> sc
   where compare = blank *>  pString stmtInDelim *> blank *> sekellExpr <* blank <* pString stmtOutDelim
         scope = blank *> pString scpInDelim *> blank *> sekellScope <* blank <* pString scpOutDelim
 
-sekellProc = StmtProc <$> (pString procKey *> ((,,) <$> id <*> args <*> scope))
+sekellProc = StmtProc <$> (pString procKey *> ((,) <$> id <*> ((,) <$> args <*> scope)))
   where id = blank *> pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&') <* blank
-        args = blank *>  pString stmtInDelim *> blank *> seperateBy (blank *> pString argSep <* blank) sekellStmt <* blank <* pString stmtOutDelim <* blank
+        args = blank *>  pString stmtInDelim *> blank *> seperateBy (blank *> pString argSep <* blank) sekellId <* blank <* pString stmtOutDelim <* blank
+        sekellId = blank *> pSpan (\x -> isAlpha x || isDigit x || x == '_' || x == '&') <* blank
         scope = blank *> pString scpInDelim *> blank *> sekellScope <* blank <* pString scpOutDelim
 
-sekellScope = StmtScope <$> endWidth (blank *> pString stmtSep <* blank) sekellStmt
+sekellScope = StmtScope <$> (blank *> endWidth (blank *> pString stmtSep <* blank) sekellStmt)
+
+sekellFileScope = StmtFileScope <$> (blank *> endWidth (blank *> pString stmtSep <* blank) sekellStmt)
 
 sekellPrint = StmtPrint <$> (pString printKey *> blank *> pString stmtInDelim *> sekellExpr <* blank <* pString stmtOutDelim)
 
-sekellReturn = StmtReturn <$> (pString returnKey *> blank *> sekellExpr <* blank)
+sekellReturnV = StmtReturn <$> (pString returnKey *> blank *> sekellExpr <* blank) 
+
+sekellReturn = StmtReturn <$> (pString returnKey *> (TpNull <$> (TpString <$> pString "")))
 
 stmtDoExpr = StmtDoExpr <$> sekellExpr
 
-sekellStmt = sekellProc <|> sekellIf <|> sekellAssignVar <|> sekellWhile  <|> sekellPrint <|> sekellReturn <|> stmtDoExpr
+sekellStmt = sekellIf <|> sekellProc <|> sekellAssignVar <|> sekellWhile  <|> sekellPrint <|> sekellReturnV <|> sekellReturn <|> stmtDoExpr

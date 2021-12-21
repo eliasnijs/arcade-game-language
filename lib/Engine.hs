@@ -24,10 +24,10 @@ data Scene
   = Playing State
   | Endscreen
 
-onBoard :: Vec2 -> Bool
+----- Gloss ------------------------------------------
+onBoard, atBottom, atTop, atLeft, atRight :: Vec2 -> Bool
 onBoard (x, y) = x >= left && x <= right && y >= bottom && y <= top
 
-atBottom, atTop, atLeft, atRight :: Vec2 -> Bool
 atBottom (x, y) = y == bottom
 
 atTop (x, y) = y == top
@@ -44,6 +44,26 @@ decBound x b = max b (x - 1)
 
 incBound x b = min b (x + 1)
 
-initb :: [a] -> [a]
-initb [] = []
-initb l = init l
+----- LIST ------------------------------------------
+getl :: StateValue -> Int -> StateValue 
+getl (StateList a) i = a !! i 
+getl a _ = error "invalid argument"
+
+addl :: StateValue -> StateValue -> StateValue 
+addl (StateList a) v = StateList $ a ++ [v]
+addl a _ = error "invalid argument"
+
+insertl :: StateValue -> Int -> StateValue -> StateValue 
+insertl (StateList a) i v = StateList $ p1 ++ [v] ++ p2
+  where (p1,p2) = splitAt i a
+insertl a _ _ = error "invalid argument!"
+
+removel :: StateValue -> Int -> StateValue 
+removel (StateList a) i = StateList $ p1 ++ tail p2
+  where (p1,p2) = splitAt i a
+removel a _ = error "invalid argument!"
+
+setl :: StateValue -> Int -> StateValue -> StateValue
+setl (StateList a) i v = StateList $ p1 ++ [v] ++ tail p2
+  where (p1,p2) = splitAt i a
+setl a _ _ = error "invalid argument!"

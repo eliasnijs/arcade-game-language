@@ -27,33 +27,42 @@ evalExpr (OpPLUS (e1, e2)) s = evalBinOpExpr e1 e2 s (+)
 
 evalExpr (OpMIN (e1, e2)) s = evalBinOpExpr e1 e2 s (-)
 
-evalExpr (OpMULT (e1, e2)) s = evalBinOpExpr e1 e1 s (*)
+evalExpr (OpMULT (e1, e2)) s = evalBinOpExpr e1 e2 s (*)
 
-evalExpr (OpDIV (e1, e2)) s = evalBinOpExpr e1 e1 s div
+evalExpr (OpDIV (e1, e2)) s = evalBinOpExpr e1 e2 s div
 
-evalExpr (CmpGT (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x > y))
+evalExpr (CmpGT (e1, e2)) s = evalBinOpExpr e1 e2 s (\x y -> fromEnum (x > y))
 
-evalExpr (CmpLT (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x < y))
+evalExpr (CmpLT (e1, e2)) s = evalBinOpExpr e1 e2 s (\x y -> fromEnum (x < y))
 
-evalExpr (CmpGE (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x >= y))
+evalExpr (CmpGE (e1, e2)) s = evalBinOpExpr e1 e2 s (\x y -> fromEnum (x >= y))
 
-evalExpr (CmpLE (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x <= y))
+evalExpr (CmpLE (e1, e2)) s = evalBinOpExpr e1 e2 s (\x y -> fromEnum (x <= y))
 
-evalExpr (CmpEQ (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (x == y))
+evalExpr (CmpEQ (e1, e2)) s = evalBinOpExpr e1 e2 s (\x y -> fromEnum (x == y))
 
-evalExpr (CmpAnd (e1, e2)) s = evalBinOpExpr e1 e1 s (\x y -> fromEnum (fromEnum x == 1 && fromEnum y == 1 ))
+evalExpr (CmpAnd (e1, e2)) s = evalBinOpExpr e1 e2 s (\x y -> fromEnum (fromEnum x == 1 && fromEnum y == 1 ))
 
-evalExpr (CmpOr (e1, e2)) s =  evalBinOpExpr e1 e1 s (\x y -> fromEnum (fromEnum x == 1 || fromEnum y == 1 ))
+evalExpr (CmpOr (e1, e2)) s =  evalBinOpExpr e1 e2 s (\x y -> fromEnum (fromEnum x == 1 || fromEnum y == 1 ))
 
 evalExpr (CallVar k) (e,p) = do 
-  let i' = fromMaybe undefined (Map.lookup k e)
+  let i' = fromMaybe StateNULL (Map.lookup k e)
   return (i',(e,p)) 
 
 evalExpr (CallProc (k, a)) (e,p) = do
-  st' <- evalStmt (fromMaybe undefined (Map.lookup k p)) (e,p)
-  return (StateVar 0, st') 
+  let f = fromMaybe undefined (Map.lookup k p)
+  (e',p') <- case f of
+    StateNormProc (aid, stmt) -> do argstmt <- do return $ StmtAssignVar <$> zip aid a
+                                    stmt' <- do return $ StmtScope $ (++) argstmt stmt
+                                    evalStmt stmt' (e,p)
+    StateStdProc -> do print a
+                       undefined
+  let r = fromMaybe StateNULL (Map.lookup returnId e')
+  return (r, (Map.intersection e' e,p)) 
                        
-evalExpr _ _ = undefined
+evalExpr _ s = do
+  putStrLn "Error: invalid expression!"
+  return (StateNULL ,s);
 
 evalBinOpExpr :: SekellExpr -> SekellExpr -> State -> (Int -> Int -> Int) -> IO (StateValue, State)
 evalBinOpExpr e1 e2 s f = 
@@ -66,7 +75,21 @@ evalBinOpExpr e1 e2 s f =
 ----- STMT ------------------------------------------
 evalStmt :: SekellStmt -> State -> IO State
 
-evalStmt (StmtScope x) s = do runEval x s
+evalStmt (StmtScope x) (e,p) = do runEval x (e,p)
+  where runEval :: [SekellStmt] -> State -> IO State
+        runEval [] st = do return st
+        runEval (x:xs) (e',p') = do
+          let r = fromMaybe StateNULL (Map.lookup returnId e')
+          xs' <- case x of
+            StmtReturn x' -> do return []
+            _ -> do return xs
+          (e''',p''') <- case x of
+            StmtDoExpr x' -> do evalStmt x (Map.intersection e' e, p')
+            _             -> do (e'',p'') <- evalStmt x (e',p')
+                                return (e'',p'')
+          runEval xs' (e''',p''')
+
+evalStmt (StmtFileScope x) s = do runEval x s
   where runEval :: [SekellStmt] -> State -> IO State
         runEval [] st = do return st
         runEval (x:xs) st = do
@@ -81,21 +104,29 @@ evalStmt (StmtPrint x) s = do
           evalToString a s = do (i,st') <- evalExpr a s
                                 return (show i, st')
 
-evalStmt (StmtIf (r, stmt)) s = do 
-  (t, st') <- evalExpr r s
+evalStmt (StmtIf (r, stmt)) (e,p) = do 
+  (t, st') <- evalExpr r (e,p)
+  case t of 
+    StateVar 0 -> return st'
+    _ -> do (e',p') <- evalStmt stmt st'
+            return (Map.intersection e' e, p')
+
+evalStmt (StmtWhile (r, stmt)) (e,p) = do 
+  (t, st') <- evalExpr r (e,p)
   case t of 
     StateVar 0 -> do {return st'}
-    _ -> do {evalStmt stmt st'}
+    _ -> do (e',p') <- evalStmt stmt st'
+            evalStmt (StmtWhile (r, stmt)) (Map.intersection e' e, p')
 
-evalStmt (StmtWhile (r, stmt)) s = do 
-  (t, st') <- evalExpr r s
-  case t of 
-    StateVar 0 -> do {return s}
-    _ -> do st'' <- evalStmt stmt st'
-            evalStmt (StmtWhile (r, stmt)) st''
+evalStmt (StmtReturn v) (e,p) = do 
+  v <- case v of
+    TpNull _ -> return (TpInt 0)
+    _ -> return v
+  (i,(e',p')) <- evalExpr v (e,p)
+  return (insert returnId i e', p')
 
-evalStmt (StmtProc (k, args, stmt)) (e,p) = do 
-  return (e, insert k stmt p)
+evalStmt (StmtProc (k, (a, StmtScope s))) (e,p) = do 
+  return (e, insert k (StateNormProc (a,s)) p)
 
 evalStmt (StmtAssignVar (k, v)) (e,p) = do 
   (i,(e',p')) <- evalExpr v (e,p)
@@ -105,3 +136,11 @@ evalStmt (StmtDoExpr e) s = do
   snd <$> evalExpr e s
 
 evalStmt _ _ = undefined
+
+----- HELP ------------------------------------------
+returnId :: Identifier 
+returnId = "#RTRN"
+
+
+
+

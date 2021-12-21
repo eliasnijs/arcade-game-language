@@ -5,11 +5,13 @@ import Data.Map
 type Identifier = String
 
 data SekellExpr
-  = TpInt Int
+  = TpNull SekellExpr
+  | TpInt Int
   | TpString String
   | TpList [SekellExpr]
   | CallVar Identifier
   | CallProc (Identifier, [SekellExpr])
+  | CallProcArg Identifier
   | OpPLUS (SekellExpr, SekellExpr)
   | OpMIN (SekellExpr, SekellExpr)
   | OpMULT (SekellExpr, SekellExpr)
@@ -21,7 +23,6 @@ data SekellExpr
   | CmpLE (SekellExpr, SekellExpr)
   | CmpAnd (SekellExpr, SekellExpr)
   | CmpOr (SekellExpr, SekellExpr)
-  | StmtCallVar Identifier
   deriving (Show, Eq)
 
 data SekellStmt
@@ -30,9 +31,10 @@ data SekellStmt
   | StmtReturn SekellExpr
   | StmtIf (SekellExpr, SekellStmt)
   | StmtWhile (SekellExpr, SekellStmt)
-  | StmtProc (Identifier, [SekellStmt], SekellStmt)
+  | StmtProc (Identifier, ([Identifier], SekellStmt))
   | StmtDoExpr SekellExpr
   | StmtScope [SekellStmt]
+  | StmtFileScope [SekellStmt]
   deriving (Show, Eq)
 
 
@@ -42,8 +44,12 @@ data StateValue
   | StateNULL
   deriving (Show, Eq)
 
-type State = (Map Identifier StateValue, Map Identifier SekellStmt) 
+data StateProc
+  = StateNormProc ([Identifier], [SekellStmt])
+  | StateStdProc
+  deriving (Show, Eq) 
 
+type State = (Map Identifier StateValue, Map Identifier StateProc) 
 
 
 
