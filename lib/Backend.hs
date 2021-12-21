@@ -69,8 +69,3 @@ getProcFromStack k a = evalExpr (CallProc (k, a))
 
 getVarFromStack :: String -> State -> IO (StateValue, State)
 getVarFromStack k = evalExpr (CallVar k)
-
-
-
-
-

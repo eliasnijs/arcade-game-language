@@ -1,7 +1,4 @@
-proc factorial(n) {
-    if ((n > 1)) {
-        n = (n*factorial((n-1)));
-    };
-    return n;
-};
-print(factorial(5));
+a = [1,2,3];
+print(a);
+a = &addl(a, [1,2]);
+print(a);

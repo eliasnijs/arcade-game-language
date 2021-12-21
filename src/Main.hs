@@ -1,13 +1,15 @@
 -- Sekell language parser (c) Elias Nijs 2021
-import Data.Maybe
 import EvaluatorImplementation
 import Keywords
 import Parser
 import ParserImplementation
 import Types
+import Engine
+import Data.Maybe
 import System.Environment (getArgs)
 import Data.Map as Map
 import Backend (initialise)
+import Engine (getStdlib)
 
 main :: IO ()
 main = do
@@ -33,4 +35,4 @@ interpret s =
       putStrLn "failed to parse!"
       return Nothing 
     Just v -> do
-      Just <$> evalStmt v (Map.empty, Map.empty)
+      Just <$> evalStmt v (Map.empty, getStdlib)

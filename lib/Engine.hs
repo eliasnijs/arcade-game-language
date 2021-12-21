@@ -1,7 +1,8 @@
 module Engine where
 
-import Data.List
+import Data.List as List
 import Data.Tuple
+import Data.Map as Map
 import Graphics.Gloss
 import Graphics.Gloss.Interface.Pure.Game
 import System.Random (StdGen, getStdGen, randomR)
@@ -20,50 +21,81 @@ right = floor $ (width + 1) / 2
 
 type Vec2 = (Int, Int)
 
-data Scene 
+data Scene
   = Playing State
   | Endscreen
 
 ----- Gloss ------------------------------------------
-onBoard, atBottom, atTop, atLeft, atRight :: Vec2 -> Bool
-onBoard (x, y) = x >= left && x <= right && y >= bottom && y <= top
+onBoard, atBottom, atTop, atLeft, atRight ::
+     StateValue -> StateValue -> StateValue
+onBoard (StateVar x) (StateVar y) = StateVar $ fromEnum $ x >= left && x <= right && y >= bottom && y <= top
+onBoard _ _ = error "invalid argument!"
 
-atBottom (x, y) = y == bottom
+atBottom (StateVar x) (StateVar y) = StateVar $ fromEnum $ y == bottom
+atBottom _ _ = error "invalid argument!"
 
-atTop (x, y) = y == top
+atTop (StateVar x) (StateVar y) = StateVar $ fromEnum $ y == top
+atTop _ _ = error "invalid argument!"
 
-atLeft (x, y) = x == left 
+atLeft (StateVar x) (StateVar y) = StateVar $ fromEnum $ x == left
+atLeft _ _ = error "invalid argument!"
 
-atRight (x, y) = x == right
+atRight (StateVar x) (StateVar y) = StateVar $ fromEnum $ x == right
+atRight _ _ = error "invalid argument!"
 
-collide :: [Vec2] -> [Vec2] -> ([Vec2], [Vec2])
-collide c1 c2 = (c1 \\ c2, c2 \\ c1)
+collide :: StateValue -> StateValue -> StateValue
+collide (StateList x) (StateList b) = StateList $ x List.\\ b
+collide _ _ = error "invalid argument!"
 
-decBound, incBound :: (Ord a, Num a) => a -> a -> a
-decBound x b = max b (x - 1)
+decBound, incBound :: StateValue -> StateValue -> StateValue
+decBound (StateVar x) (StateVar b) = StateVar $ max b (x - 1)
+decBound _ _ = error "invalid argument!"
 
-incBound x b = min b (x + 1)
+incBound (StateVar x) (StateVar b) = StateVar $ min b (x + 1)
+incBound _ _ = error "invalid argument!"
 
 ----- LIST ------------------------------------------
-getl :: StateValue -> Int -> StateValue 
-getl (StateList a) i = a !! i 
-getl a _ = error "invalid argument"
+sizel :: StateValue -> StateValue
+sizel (StateList a) = StateVar $ length a
+sizel _ = error "invalid argument!"
 
-addl :: StateValue -> StateValue -> StateValue 
+getl :: StateValue -> StateValue -> StateValue
+getl (StateList a) (StateVar i) = a !! i
+getl a _ = error "invalid argument!"
+
+addl :: StateValue -> StateValue -> StateValue
 addl (StateList a) v = StateList $ a ++ [v]
-addl a _ = error "invalid argument"
+addl a _ = error "invalid argument!"
 
-insertl :: StateValue -> Int -> StateValue -> StateValue 
-insertl (StateList a) i v = StateList $ p1 ++ [v] ++ p2
-  where (p1,p2) = splitAt i a
+insertl :: StateValue -> StateValue -> StateValue -> StateValue
+insertl (StateList a) (StateVar i) v = StateList $ p1 ++ [v] ++ p2
+  where (p1, p2) = List.splitAt i a
 insertl a _ _ = error "invalid argument!"
 
-removel :: StateValue -> Int -> StateValue 
-removel (StateList a) i = StateList $ p1 ++ tail p2
-  where (p1,p2) = splitAt i a
+removel :: StateValue -> StateValue -> StateValue
+removel (StateList a) (StateVar i) = StateList $ p1 ++ tail p2
+  where
+    (p1, p2) = List.splitAt i a
 removel a _ = error "invalid argument!"
 
-setl :: StateValue -> Int -> StateValue -> StateValue
-setl (StateList a) i v = StateList $ p1 ++ [v] ++ tail p2
-  where (p1,p2) = splitAt i a
+setl :: StateValue -> StateValue -> StateValue -> StateValue
+setl (StateList a) (StateVar i) v = StateList $ p1 ++ [v] ++ tail p2
+  where (p1, p2) = List.splitAt i a
 setl a _ _ = error "invalid argument!"
+
+----- UNION ------------------------------------------
+getStdlib :: Map Identifier StateProc
+getStdlib = fromList [ ("&getl", StateStdProc $ AC3 getl)
+                     , ("&removel", StateStdProc $ AC3 removel)
+                     , ("&addl", StateStdProc $ AC3 addl)
+                     , ("&insertl", StateStdProc $ AC4 insertl)
+                     , ("&setl", StateStdProc $ AC4 setl)
+                     , ("&onBoard", StateStdProc $ AC3 onBoard)
+                     , ("&atTop", StateStdProc $ AC3 atTop)
+                     , ("&atBottom", StateStdProc $ AC3 atBottom)
+                     , ("&atRight", StateStdProc $ AC3 atRight)
+                     , ("&atLeft", StateStdProc $ AC3 atLeft)
+                     , ("&decBound", StateStdProc $ AC3 decBound)
+                     , ("&incBound", StateStdProc $ AC3 incBound)
+                     , ("&collide", StateStdProc $ AC3 collide)
+                   ]

@@ -6,7 +6,13 @@
 print(&enemies);
 
 proc &update () {
+  
 };
+
+
+
+
+
 
 proc &key_left () {
   &px = (&px - 1); 

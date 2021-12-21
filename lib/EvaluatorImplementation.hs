@@ -4,6 +4,7 @@ import Data.Maybe
 import Data.Map as Map
 import Control.Monad
 import Types
+import Engine
 import qualified Control.Arrow as Map
 
 ----- EXPR ------------------------------------------
@@ -49,17 +50,16 @@ evalExpr (CallVar k) (e,p) = do
   let i' = fromMaybe StateNULL (Map.lookup k e)
   return (i',(e,p)) 
 
-evalExpr (CallProc (k, a)) (e,p) = do
+evalExpr (CallProc (k,a)) (e,p) = do
   let f = fromMaybe undefined (Map.lookup k p)
   (e',p') <- case f of
     StateNormProc (aid, stmt) -> do argstmt <- do return $ StmtAssignVar <$> zip aid a
                                     stmt' <- do return $ StmtScope $ (++) argstmt stmt
                                     evalStmt stmt' (e,p)
-    StateStdProc -> do print a
-                       undefined
+    StateStdProc g -> evalStdProc g a (e,p)
   let r = fromMaybe StateNULL (Map.lookup returnId e')
   return (r, (Map.intersection e' e,p)) 
-                       
+
 evalExpr _ s = do
   putStrLn "Error: invalid expression!"
   return (StateNULL ,s);
@@ -72,6 +72,24 @@ evalBinOpExpr e1 e2 s f =
        (StateVar n1', StateVar n2') -> return (StateVar (f n1' n2'), st'')
        (_, _) -> return (StateNULL, st'')
 
+evalStdProc :: StdProc -> [SekellExpr] -> State -> IO State
+evalStdProc (AC2 f) [arg1] (e,p) = do
+  (a1,(e',p')) <- evalExpr arg1 (e,p)
+  let v = f a1
+  return (insert returnId v e', p')
+evalStdProc (AC3 f) [arg1, arg2] (e,p) = do
+  (a1,s) <- evalExpr arg1 (e,p)
+  (a2,(e',p')) <- evalExpr arg2 s
+  let v = f a1 a2
+  return (insert returnId v e', p')
+evalStdProc (AC4 f) [arg1, arg2, arg3] (e,p) = do
+  (a1,s) <- evalExpr arg1 (e,p)
+  (a2,s') <- evalExpr arg2 s
+  (a3,(e',p')) <- evalExpr arg3 s'
+  let v = f a1 a2 a3 
+  return (insert returnId v e, p)
+evalStdProc _ _ s = return s
+    
 ----- STMT ------------------------------------------
 evalStmt :: SekellStmt -> State -> IO State
 
