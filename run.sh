@@ -1,3 +1,3 @@
 #1/bin/sh
 
-stack run
+stack run $*

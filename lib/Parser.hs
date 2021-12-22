@@ -53,10 +53,14 @@ notNull (Parser p) =
 
 endWidth, seperateBy :: Parser a -> Parser b -> Parser [b]
 endWidth s e = many (e <* s) <|> pure []
+
 seperateBy s e = (:) <$> e <*> many (s *> e) <|> pure []
 
 blank, sBlank, nBlank, notBlank :: Parser String
-blank = pSpan (\x -> x == ' ' || x == '\n');
+blank = pSpan (\x -> x == ' ' || x == '\n')
+
 sBlank = pSpan (== ' ')
+
 nBlank = pSpan (== '\n')
+
 notBlank = pSpan (\x -> x /= ' ' && x /= '\n')

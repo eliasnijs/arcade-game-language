@@ -130,7 +130,8 @@ getStdProclib = fromList [
                      , ("&atLeft",    StateStdProc $ AC3 atLeft)
                      , ("&max",       StateStdProc $ AC3 maxx)
                      , ("&min",       StateStdProc $ AC3 minn)
-                     , ("&random",    StateStdProc RD4)
+                      -- definition is located in the EvaluatorImplementation
+                     , ("&random",    StateStdProc RD4)  
                    ]
 
 getStdVarlib :: Map Identifier StateValue

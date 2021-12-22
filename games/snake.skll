@@ -81,13 +81,12 @@ proc maybe_eat () {
 proc maybe_spawn_food () {
   if (fn) {
     fx = &random(&getLeft(), &getRight());
-    fy = &random(&getLeft(), &getRight());
+    fy = &random(&getBottom(), &getTop());
     while (pos_not_free(fx,fy)) {
       fx = &random(&getLeft(), &getRight());
-      fy = &random(&getLeft(), &getRight());
+      fy = &random(&getBottom(), &getTop());
     };
     f = [fx,fy];
-    print(f);
     &friendlies = &setl(&friendlies, 0, f);
     fn = 0;
   };
@@ -104,6 +103,3 @@ proc pos_not_free (x, y) {
   };
   return nf; 
 };
-
-
-

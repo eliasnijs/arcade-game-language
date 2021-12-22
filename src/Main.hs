@@ -1,4 +1,3 @@
--- Sekell language parser (c) Elias Nijs 2021
 import EvaluatorImplementation
 import Keywords
 import Parser
@@ -6,7 +5,6 @@ import ParserImplementation
 import Types
 import Engine
 import Backend (initialise)
-import Engine
 import Data.Maybe
 import System.Environment (getArgs)
 import Data.Map as Map
@@ -14,8 +12,7 @@ import System.Random (StdGen, getStdGen, randomR)
 
 main :: IO ()
 main = do
-  args <- do return ["tests/snake.skll"] -- TODO: Change to getArgs when everything is done
-  -- args <- do return ["tests/simple_test1.skll"] -- TODO: Change to getArgs when everything is done
+  args <- getArgs 
   case args of
     [] -> putStrLn "no input files!"
     _ -> do
