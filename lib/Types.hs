@@ -1,5 +1,6 @@
 module Types where
 
+import System.Random (StdGen, getStdGen, randomR)
 import Data.Map
 
 type Identifier = String
@@ -48,10 +49,11 @@ data StdProc
   | AC2 (StateValue -> StateValue)
   | AC3 (StateValue -> StateValue -> StateValue)
   | AC4 (StateValue -> StateValue -> StateValue -> StateValue)
+  | RD4 
 
 data StateProc
   = StateNormProc ([Identifier], [SekellStmt])
   | StateStdProc StdProc
   | StateProcNULL
 
-type State = (Map Identifier StateValue, Map Identifier StateProc) 
+type State = (Map Identifier StateValue, Map Identifier StateProc, StdGen) 

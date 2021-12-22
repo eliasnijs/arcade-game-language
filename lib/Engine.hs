@@ -21,7 +21,7 @@ right = floor $ (width + 1) / 2
 type Vec2 = (Int, Int)
 
 data Scene
-  = Playing State
+  = Playing {state :: State}
   | Endscreen
 
 ----- Gloss ------------------------------------------
@@ -130,6 +130,7 @@ getStdProclib = fromList [
                      , ("&atLeft",    StateStdProc $ AC3 atLeft)
                      , ("&max",       StateStdProc $ AC3 maxx)
                      , ("&min",       StateStdProc $ AC3 minn)
+                     , ("&random",    StateStdProc RD4)
                    ]
 
 getStdVarlib :: Map Identifier StateValue

@@ -3,10 +3,8 @@ mv_y = 1;
 &px = 0;
 &py = 1;
 
-fn = 0;
-fx = 0; 
-fy = 0; 
-
+fn = 1;
+&friendlies = [[0,0]];
 &enemies = [[0,0]];
 ls_enemy = 0;
 
@@ -31,10 +29,11 @@ proc &key_space () {
 };
 
 proc &update () {
+  maybe_spawn_food();
   update_tail();
   move();
   check_collision();
-  maybe_spawn_food();
+  maybe_eat();
 };
 
 proc move () {
@@ -65,16 +64,13 @@ proc update_tail () {
 };
 
 proc check_collision () {
-  index = (&sizel(&enemies)-1);
-  while ((index >= 0)) {
-    np = &getl(&enemies, index);
-    c = ((&px == &getl(np, 0)) && (&py == &getl(np, 1)));
-    &completed = (&completed || c);
-    index = (index - 1);
-  };
+  &completed = pos_not_free(&px, &py);
 };
 
 proc maybe_eat () {
+  f = &getl(&friendlies, 0);
+  fx = &getl(f,0);
+  fy = &getl(f,1);
   if ( ((&px == fx) && (&py == fy)) ) {
     segment = &getl(&enemies, (&sizel(&enemies)-1));
     &enemies = &addl(&enemies, segment);
@@ -84,10 +80,30 @@ proc maybe_eat () {
 
 proc maybe_spawn_food () {
   if (fn) {
-
+    fx = &random(&getLeft(), &getRight());
+    fy = &random(&getLeft(), &getRight());
+    while (pos_not_free(fx,fy)) {
+      fx = &random(&getLeft(), &getRight());
+      fy = &random(&getLeft(), &getRight());
+    };
+    f = [fx,fy];
+    print(f);
+    &friendlies = &setl(&friendlies, 0, f);
+    fn = 0;
   };
 };
 
+proc pos_not_free (x, y) {
+  nf = 0;
+  index = (&sizel(&enemies)-1);
+  while ((index >= 0)) {
+    np = &getl(&enemies, index);
+    c = ((x == &getl(np, 0)) && (y == &getl(np, 1)));
+    nf = (nf || c);
+    index = (index - 1);
+  };
+  return nf; 
+};
 
 
 

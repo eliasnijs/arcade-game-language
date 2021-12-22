@@ -3,7 +3,6 @@ module Keywords where
 type Keyword = String
 
 ifKey, procKey, loopKey, returnKey, andSep, orSep, strDelim, stmtSep, gtSep, geSep, eqSep, leSep, ltSep :: Keyword
-builtinKey   = "@"
 procKey      = "proc "
 ifKey        = "if"
 loopKey      = "while"

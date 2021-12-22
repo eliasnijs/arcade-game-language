@@ -5,11 +5,12 @@ import Parser
 import ParserImplementation
 import Types
 import Engine
+import Backend (initialise)
+import Engine
 import Data.Maybe
 import System.Environment (getArgs)
 import Data.Map as Map
-import Backend (initialise)
-import Engine
+import System.Random (StdGen, getStdGen, randomR)
 
 main :: IO ()
 main = do
@@ -19,7 +20,6 @@ main = do
     [] -> putStrLn "no input files!"
     _ -> do
       stmt <- parseFile (head args) sekellFileScope
-      print stmt
       state <- interpret stmt
       initialise state
       return ()
@@ -36,4 +36,5 @@ interpret s =
       putStrLn "failed to parse!"
       return Nothing 
     Just v -> do
-      Just <$> evalStmt v (getStdVarlib, getStdProclib)
+      stdg <- getStdGen
+      Just <$> evalStmt v (getStdVarlib, getStdProclib, stdg)
