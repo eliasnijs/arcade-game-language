@@ -1,3 +1,74 @@
-# Verslag opgave 3
+﻿# Functioneel programmeren - Project 3 2021
 
-...
+## De Taal - Sekell
+Eerst zal de taal besproken worden. De taal is gebaseerd op C en wordt geparst en gevaluate in Haskell. De naam - Sekell - is dan ook een samevoeging van de namen van deze 2 talen.
+
+We zullen hierbij beginnen met een kort overzicht van de syntax.
+We beginnen met enkele special situaties omtrent de keywords en characters die gebruikt worden om een bepaalde statement aan te duiden.
+1. proc     ->  proc zal gebruikt worden in de plaats van func of funtion in vele plaatsen.
+2. &        ->  Indien een functie of variabele begint met &, is dit om aan te duiden dat het een library functie is. Dit is een functie of variabele die geimplementeerd is in hasell .
+
+Al de andere keywords en characters volgen de volgen dezelfde syntax als C.
+
+Nog enkele belangrijke opmerking:
+1. Een return statement werkt enkel binnen de scope van de functie waarmee deze overeenkomt. Een return in een if-statement zal dus niet werken.
+2. Wanneer een binaire expressie nodig is zoals `+, -, >, <, ..`, moet men deze telkens tussen haakjes zetten.
+3. Else-Statements bestaan niet.
+Indien ik meer tijd had gehad, zou ik graag deze 3 dingen nog verholpen hebben.
+
+## De taal in combinatie met de engine
+
+Om een vlotte link te kunnen leggen met de engine werd er een eenvoudig systeem voorzien van procedures en variable die een programma kan/moet implementeren (deze komen allen met een standaard implementatie, voor procedures is dit `geen enkele actie uitvoeren` en voor variabelen is dit 0).
+
+De 5 variabelen waarmee de engine interageerd zijn:
+1. `&completed`  - geeft aan of de game gedaan is, indien deze op 1 gezet wordt zal gloss het eindscherm teruggeven als volgende state
+2. `&px`        - x coordinaat van de speler
+3. `&py`        - y coordinaat van de speler
+4. `&enemies`   - lijst met de coordinaten van de vijanden
+5. `friendlies` - lijst met de coordinate van de vrienden
+
+De 6 procedures waarmee de engine interageert bestaat uit 1 update procedure en 5 movement procedures:
+1. `&key_space` - behandelt een keypress op `Spacebar`
+2. `&key_right` - behandelt een keypress op `Rightwards Arrow`
+3. `&key_left`  - behandelt een keypress op `Leftwards Arrow`
+4. `&key_down`  - behandelt een keypress op `Downwards Arrow`
+5. `&key_up`    - behandelt een keypress op `Upwards Arrow`
+6. `&update`    - zal elke frame opgeroepen worden om de volgende world state te maken
+
+Verder zijn er ook nog 20 hulpfuncties gedefinieerd in de engine. Deze vallen op te delen in 3 categorieën: procedures in verband met het spelbord, lijstoperaties, en hulpfuncties.
+Al deze functis werken met StateValue, meer concreet ze nemen een StateValue, patternmatche dan op het juiste type en geven dan indien de juiste argumenten werden meegegeven een nieuwe StateValue terug. Later meer over StateValue, zie deel over de evaluatie.
+
+Alle hulpfuncties (Volledige typedefinities, zie lib/Engine.hs):
+ 1. `&getHeight`  - geeft de hoogte terug
+ 2. `&getWidth`   - geeft de breedte terug
+3. `&getBottom`  - geeft de bodem y coord terug
+ 4. `&getLeft`    - geeft de links x coord terug
+ 5. `&getRight`   - geeft de rechts x coord terug
+ 6. `&getTop`     - geeft de top y coord terug
+ 7. `&sizel`      - geeft de lengte van de lijst terug
+ 8. `&uniql`      - geeft de lijst zonder duplicates terug
+ 9. `&getl`       - geeft de value op positie i terug
+10. `&removel`    - verwijderd de value op positie i
+11. `&addl`       - voegt een element toe op het einde van de lijst
+12. `&insertl`    - plaatst een element op plaats i
+13. `&setl`       - verandert het element op plaats i naar de meegegeven value
+14. `&diffl`      - geeft lijst1 zonder de elementen in lijst2 terug
+15. `&onBoard`    - geeft terug x, y op het bord ligt
+16. `&atTop`      - geeft terug of x, y op de bovenste rij ligt
+17. `&atBottom`   - geeft terug of x, y op de onderste rij ligt
+18. `&atRight`    - geeft terug of x, y helemaal rechts ligt
+19. `&atLeft`     - geeft terug of x,y helemaal links ligt
+20. `&max`        - geeft het maximum van 2 waarden terug
+21. `&min`        - geeft het minimum van 2 waarden terug
+
+## De Parser
+De parser zal zal een lange string nemen en deze omzetten naar een AST structuur. Op basis van deze structuur zal de evaluator dan kunnen evaluate. Om deze structuur te maken wordt er telkens matcht op een bepaald patroon. In dit patroon zal dan verder gematcht worden op het benodigde patroon enzovoort... Om dit te doen gebruiken we de operator `<|>` die kijkt of een patroon matcht en zo niet naar het volgende patroon gaat. Om dit te kunnen gebruiken was het noodzakelijk om Alternative te implementeren. Indien we een match hebben zullen we dan het patroon wrappen in een bepaald type zodat de evaluator later weet hoe hij dit moet behandelen. Verder werd er ook rekening gehouden met eventuele latere uitbreidingen in verband met error reporting. De parse functie geeft namelijk als output Maybe `(a, String)`. In een verdere stage van de taal zou deze maybe kunnen vervangen worden met een Either die de locatie teruggeeft.
+
+## De Evaluator
+De evaluator werkt aan de hand van IO State. Deze State bestaat uit een map met variabelen, een map met procedures en een random generator. De bedoeling is om 1 grote IO State terug te geven die dan door de playIO van de engine zal kunnen gebruikt worden. Om dit te bereiken zal er steeds gepatternmatched worden op het datatype dat toegekend is door de Parser aan de huidige statement en deze dan correct af te handelen. Ook hier zal de code recursief werken waardoor alles behandeld wordt.
+
+## De Engine
+De engine werkt op basis van de State die door de evaluator doorgeven wordt. Deze state zal de wereld vormen waarmee playIO mee te werk gaat. De update functies van playIO zullen ingevuld worden met functies uit de State.
+
+## Gebruik monad transformers
+Er werd geen monad stack aangewend om dit project op te lossen, monad transformers zijn er dus ook niet. De enige monad die werd gebruikt is de IO. In alle andere gevallen werd een monad overbodig geacht en dus niet gebruikt. Een voorbeeld hiervan is het gebruik van een monad voor de parser zoals in de slides, in mijn parser maak ik hier gebruik van de `<|>` operator die alternative ons levert.
