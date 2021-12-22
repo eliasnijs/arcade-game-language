@@ -1,5 +1,7 @@
 ﻿# Functioneel programmeren - Project 3 2021
 
+! De games gemaakt in Sekell zitten in de folder games/
+
 ## De Taal - Sekell
 Eerst zal de taal besproken worden. De taal is gebaseerd op C en wordt geparst en gevaluate in Haskell. De naam - Sekell - is dan ook een samevoeging van de namen van deze 2 talen.
 
