@@ -37,7 +37,6 @@ data SekellStmt
   | StmtFileScope [SekellStmt]
   deriving (Show, Eq)
 
-
 data StateValue 
   = StateList [StateValue]
   | StateVar Int
@@ -45,18 +44,14 @@ data StateValue
   deriving (Show, Eq)
 
 data StdProc
-  = AC2         (StateValue -> StateValue)
-  | AC3         (StateValue -> StateValue -> StateValue)
-  | AC4         (StateValue -> StateValue -> StateValue -> StateValue)
+  = AC1 StateValue
+  | AC2 (StateValue -> StateValue)
+  | AC3 (StateValue -> StateValue -> StateValue)
+  | AC4 (StateValue -> StateValue -> StateValue -> StateValue)
 
 data StateProc
   = StateNormProc ([Identifier], [SekellStmt])
   | StateStdProc StdProc
+  | StateProcNULL
 
 type State = (Map Identifier StateValue, Map Identifier StateProc) 
-
-
-
-
-
-

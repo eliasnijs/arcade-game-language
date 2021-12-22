@@ -21,7 +21,7 @@ initialise s = do
       playIO
         (InWindow "PRIMEVAL GAMES" (500, 900) (10, 10))
         backgroundColor
-        2
+        3
         (Playing state)
         renderframe
         move
@@ -43,7 +43,10 @@ move _ scene = do
 
 updatestate :: Float -> Scene -> IO Scene
 updatestate _ (Playing state) = do
-  Playing <$> (snd <$> getProcFromStack "&update" [] state)
+  c <- fst <$> getVarFromStack "&completed" state
+  case c of 
+    StateVar 0 -> Playing <$> (snd <$> getProcFromStack "&update" [] state)
+    _          -> do return Endscreen 
 updatestate _ game = do
   return game
 

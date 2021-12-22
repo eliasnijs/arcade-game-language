@@ -45,7 +45,7 @@ sekellLT = CmpLT <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$>
 
 sekellLE = CmpLE <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$> sekellExpr <*> (blank *> pString leSep <* blank) <*> sekellExpr) <* pString stmtOutDelim)
 
-sekellAnd = CmpAnd <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$> sekellExpr <*> (blank *> pString orSep <* blank) <*> sekellExpr) <* pString stmtOutDelim)
+sekellAnd = CmpAnd <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$> sekellExpr <*> (blank *> pString andSep <* blank) <*> sekellExpr) <* pString stmtOutDelim)
 
 sekellOr = CmpOr <$> (pString stmtInDelim *> blank *> ((\v1 _ v2 -> (v1,v2)) <$> sekellExpr <*> (blank *> pString orSep <* blank) <*> sekellExpr) <* pString stmtOutDelim)
 

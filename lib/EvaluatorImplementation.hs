@@ -51,14 +51,18 @@ evalExpr (CallVar k) (e,p) = do
   return (i',(e,p)) 
 
 evalExpr (CallProc (k,a)) (e,p) = do
-  let f = fromMaybe undefined (Map.lookup k p)
+  let f = fromMaybe StateProcNULL (Map.lookup k p)
   (e',p') <- case f of
-    StateNormProc (aid, stmt) -> do argstmt <- do return $ StmtAssignVar <$> zip aid a
-                                    stmt' <- do return $ StmtScope $ (++) argstmt stmt
-                                    evalStmt stmt' (e,p)
+    StateNormProc (aid, stmt) -> 
+      do argstmt <- do return $ StmtAssignVar <$> zip aid a
+         stmt' <- do return $ StmtScope $ (++) argstmt stmt
+         evalStmt stmt' (e,p)
     StateStdProc g -> evalStdProc g a (e,p)
+    StateProcNULL  -> do print ("no procudure `" ++ k ++ "` was found!")
+                         error ""
   let r = fromMaybe StateNULL (Map.lookup returnId e')
-  return (r, (Map.intersection e' e,p)) 
+  e'' <- do return $ delete returnId e' 
+  return (r, (Map.intersection e'' e,p)) 
 
 evalExpr _ s = do
   putStrLn "Error: invalid expression!"
@@ -73,6 +77,9 @@ evalBinOpExpr e1 e2 s f =
        (_, _) -> return (StateNULL, st'')
 
 evalStdProc :: StdProc -> [SekellExpr] -> State -> IO State
+evalStdProc (AC1 f) [] (e,p) = do
+  let v = f
+  return (insert returnId v e, p)
 evalStdProc (AC2 f) [arg1] (e,p) = do
   (a1,(e',p')) <- evalExpr arg1 (e,p)
   let v = f a1

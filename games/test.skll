@@ -1,34 +1,75 @@
-&px = 0; 
-&py = 0; 
-&enemies = [[1,1], [2,2], [3,3]];
-&friendlies = [[5,1], [5,2], [5,3]];
-
-print(&enemies);
+a = [1,2,3];
+level1 = [[-5, -4, 2, -1, 0, 3, 4, 5], [0, 3], [], [], [2, 3, 4, 5, 0, -3, -1, -5]];
+&py = (&getBottom()+1); 
 
 proc &update () {
-  
+  if ((&sizel(level1) > 0)) { 
+    spawn_line ();
+  };
+  update_friendly();
+  collide_enemies_bullets();
+  update_enemies();
+  collide_enemies_bullets();
 };
 
-
-
-
-
-
-proc &key_left () {
-  &px = (&px - 1); 
+proc &key_left () { 
+  &px = &max((&px-1), &getLeft()); 
 };
 
-proc &key_right () {
-  &px = (&px + 1); 
-};
-
-proc &key_up () {
-  &py = (&py + 1); 
-};
-
-proc &key_down () {
-  &py = (&py - 1); 
+proc &key_right () { 
+  &px = &min((&px+1), &getRight());   
 };
 
 proc &key_space () {
+  &friendlies = &addl(&friendlies, [&px, (&py+1)]);
+};
+
+proc spawn_line () {
+  line = &getl(level1, 0);
+  level1 = &removel(level1, 0);
+  size = &sizel(line);
+  index = 0;
+  while ((index < size)) {
+    xpos = &getl(line, index); 
+    &enemies = &addl(&enemies, [xpos, &getTop()]);
+    index = (index + 1);
+  };
+};
+
+proc update_friendly () {
+  size = &sizel(&friendlies);
+  index = 0;
+  tobe_removed = [];
+  while ((index < size)) {
+    friend = &getl(&friendlies, index);
+    friend = &setl(friend, 1, (&getl(friend,1)+1));
+    &friendlies = &setl(&friendlies, index, friend);
+    if ((&getl(friend,1) > &getTop())) {
+      tobe_removed = &addl(tobe_removed, friend);
+    };
+    index = (index + 1);
+  };
+  &friendlies = &uniql(&friendlies);
+  &friendlies = &diffl(&friendlies, tobe_removed);
+};
+
+proc update_enemies () {
+  size = &sizel(&enemies);
+  index = 0;
+  while ((index < size)) {
+    ele = &getl(&enemies, index);
+    ele = &setl(ele, 1, (&getl(ele,1)-1));
+    &enemies = &setl(&enemies, index, ele);
+    if ((&getl(ele,1) <= &getBottom())) {
+      &completed = 1;
+    };
+    index = (index + 1);
+  };
+  &enemies = &uniql(&enemies);
+};
+
+proc collide_enemies_bullets () {
+    friendlies_temp = &diffl(&friendlies, &enemies);
+    &enemies = &diffl(&enemies, &friendlies);
+    &friendlies = friendlies_temp;
 };
