@@ -9,6 +9,7 @@ import qualified Control.Arrow as Map
 import System.Random (StdGen, getStdGen, randomR)
 
 ----- EXPR ------------------------------------------
+-- StateT State IO StateValue kon hier goed gebruikt worden
 evalExpr :: SekellExpr -> State -> IO (StateValue, State)
 
 evalExpr (TpInt i) s = 

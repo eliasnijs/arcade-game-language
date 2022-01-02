@@ -47,6 +47,7 @@ sekellCallProc = CallProc <$> ((,) <$> id <*> args)
       pString stmtOutDelim <*
       blank
 
+-- gemiste abstractie: binaire operatie
 sekellPLUS =
   OpPLUS <$>
   (pString stmtInDelim *> blank *>

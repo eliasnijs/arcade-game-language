@@ -7,6 +7,8 @@ newtype Parser a =
   Parser
     { parse :: String -> Maybe (String, a)
     }
+-- door een Maybe-parser te gebruiken ipv een lijst-parser zoals we in de lessen zagen,
+-- verlies je de mogelijkheid om ambiguiteit te detecteren
 
 instance Functor Parser where
   fmap f (Parser p) =
